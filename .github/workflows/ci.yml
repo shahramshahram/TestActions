@@ -1,0 +1,31 @@
+name: Continuous integration
+
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - main
+      - feature/**
+      - release/**
+  push:
+    branches:
+      - main
+      - release/**
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    env:
+      GitHubEpiserverPAT: ${{secrets.GITHUB_TOKEN }}
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        global-json-file: "./global.json"
+    - name: Restore packages
+      run: dotnet restore
+    - name: Code format check
+      run: dotnet format --no-restore --verify-no-changes
+    - name: Build solution
+      run: dotnet build --no-restore --configuration Release

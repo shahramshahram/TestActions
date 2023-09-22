@@ -1,0 +1,8 @@
+{
+  "sdk": {
+    "version": "7.0.304",
+    "architecture": "x64",
+    "rollForward": "latestMajor",
+    "allowPrerelease": false
+  }
+}
