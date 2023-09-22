@@ -3,7 +3,7 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container. ss
+// Add services to the container. ss v1
 
 var log = new LoggerConfiguration()
     .WriteTo.Console(formatter: new RenderedCompactJsonFormatter())
