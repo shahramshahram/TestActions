@@ -15,8 +15,6 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    env:
-      GitHubEpiserverPAT: ${{secrets.GITHUB_TOKEN }}
     steps:
     - uses: actions/checkout@v3
     - name: Setup .NET
