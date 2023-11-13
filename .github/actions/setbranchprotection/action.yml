@@ -1,0 +1,45 @@
+name: 'Set branch protection rules'
+
+inputs:
+  token:
+    description: 'Github token to access repository with'
+    required: true
+  repository:
+    description: 'Repository to update'
+    default: ${{ github.repository }}
+  branch:
+    description: 'Branch to update'
+    default: ${{ github.ref_name }}
+  setEnforceAdmins:
+    description: 'Set enforce_admins'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set branch protection rules
+      shell: pwsh
+      run: |
+          $repository = '${{ inputs.repository }}'
+          $branch = '${{ inputs.branch }}'
+
+          $headers = @{
+            Authorization = "Bearer ${{ inputs.token }}"
+            Accept = "application/vnd.github.v3+json"
+          }
+
+          Write-Output "Preparing to update $repository $branch"
+
+          $branchProtectionResponse = Invoke-WebRequest -Uri "https://api.github.com/repos/$repository/branches/$branch/protection" -Headers $headers -Method "Get" -ErrorAction Stop
+          $currentBranchProtection = $branchProtectionResponse.Content | ConvertFrom-Json
+
+          if (('${{ inputs.setEnforceAdmins }}' -eq 'true') -and ($currentBranchProtection.enforce_admins.enabled -ne $true))
+          {
+            Write-Output "Enabling enforce_admins"
+            $null = Invoke-WebRequest -Uri $currentBranchProtection.enforce_admins.url -Headers $headers -Method "Post" -ErrorAction Stop
+          }
+
+          if (('${{ inputs.setEnforceAdmins }}' -eq 'false') -and ($currentBranchProtection.enforce_admins.enabled -ne $false))
+          {
+            Write-Output "Disabling enforce_admins"
+            $null = Invoke-WebRequest -Uri $currentBranchProtection.enforce_admins.url -Headers $headers -Method "Delete" -ErrorAction Stop
+          }

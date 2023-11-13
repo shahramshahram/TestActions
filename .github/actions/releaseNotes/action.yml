@@ -37,22 +37,22 @@ runs:
 
         $releaseNotes += "# Changes`n`n"
 
-        #foreach ($logLine in $gitLogs) {
-        #    $commitId = ($logLine -split " ")[0]
-        #    $commitMessage = (git log --format=%B -n 1 $commitId)
-        #    $jiraTasks = Select-String -Pattern '${{ inputs.jiraRegex }}' -Input $commitMessage -AllMatches
-        #    if ($jiraTasks.Matches) {
-        #        $jiraTasks = $jiraTasks.Matches | ForEach-Object { "[$($_.Value)](https://jira.sso.episerver.net/browse/$($_.Value))" }
-        #    }
-        #    if ($jiraTasks.Count -gt 0) {
-        #        $commitNotes = "- $logLine ($($jiraTasks -join ", "))`n"
-        #    }
-        #    else {
-        #        $commitNotes = "- $logLine`n"
-        #    }
+        foreach ($logLine in $gitLogs) {
+            $commitId = ($logLine -split " ")[0]
+            $commitMessage = (git log --format=%B -n 1 $commitId)
+            $jiraTasks = Select-String -Pattern '${{ inputs.jiraRegex }}' -Input $commitMessage -AllMatches
+            if ($jiraTasks.Matches) {
+                $jiraTasks = $jiraTasks.Matches | ForEach-Object { "[$($_.Value)](https://jira.sso.episerver.net/browse/$($_.Value))" }
+            }
+            if ($jiraTasks.Count -gt 0) {
+                $commitNotes = "- $logLine ($($jiraTasks -join ", "))`n"
+            }
+            else {
+                $commitNotes = "- $logLine`n"
+            }
 
-        #    $releaseNotes += $commitNotes
-        #}
+            $releaseNotes += $commitNotes
+        }
 
         $headers = @{
           Authorization = "Bearer ${{ inputs.token }}"
