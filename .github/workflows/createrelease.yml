@@ -38,7 +38,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          token: ${{ secrets.TESTACTION_PATH }}
+          token: ${{ secrets.TESTACTION_PAT }}
 
       - name: Version bump
         id: new_version
@@ -77,7 +77,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: ./.github/actions/setbranchprotection
         with:
-          token: ${{ secrets.TESTACTION_PATH }}
+          token: ${{ secrets.TESTACTION_PAT }}
           setEnforceAdmins: 'false'
 
       - name: Push version bump
@@ -107,9 +107,12 @@ jobs:
         uses: ./.github/actions/setbranchprotection
         if: github.ref == 'refs/heads/main' && always()
         with:
-          token: ${{ secrets.TESTACTION_PATH }}
+          token: ${{ secrets.TESTACTION_PAT }}
           setEnforceAdmins: 'true'
 
+      - name: Build
+        run: src/buildscripts/Build.ps1 -GithubPackage -OnlyBuild
+      
       - name: Add Release notes File
         run: |
           New-Item -ItemType Directory -Path "src/buildscripts/artifacts" -Force -ErrorAction SilentlyContinue
@@ -119,7 +122,14 @@ jobs:
         uses: ./.github/actions/releaseNotes
 
       - name: Create Jira release
-        run: src/buildscripts/github/SetJiraRelease.ps1 -Username '${{ secrets.JIRA_USERNAME }}' -Password '${{ secrets.JIRA_PASSWORD }}' -DefaultPackage 'TESTACTION.SAAS' -Version '${{ steps.new_version.outputs.version }}' -PreVersion '${{ steps.version_bump.outputs.sha_short }}'
+        run: src/buildscripts/github/setjirarelease.ps1 -Username '${{ secrets.JIRA_USERNAME }}' -Password '${{ secrets.JIRA_PASSWORD }}' -DefaultPackage 'TESTACTION.SAAS' -Version '${{ steps.new_version.outputs.version }}' -PreVersion '${{ steps.version_bump.outputs.sha_short }}'
+
+      - name: Create and push new branch
+        run: |
+            $NEW_BRANCH_NAME=release/v${{ steps.new_version.outputs.version }}
+            git checkout -b $NEW_BRANCH_NAME
+            git push origin $NEW_BRANCH_NAME
+            echo "New branch created: $NEW_BRANCH_NAME"
 
       - name: Create Github Release
         id: new_release
@@ -129,7 +139,7 @@ jobs:
         with:
           tag_name: v${{ steps.new_version.outputs.version }}
           release_name: v${{ steps.new_version.outputs.version }}
-          commitish: ${{ steps.version_bump.outputs.sha }}
+          commitish: release/v${{ steps.new_version.outputs.version }}
           body_path: src/buildscripts/artifacts/ReleaseNotes.txt
           draft: true
           prerelease: false
